@@ -7,6 +7,8 @@
 (define ones (lambda () (cons 1 ones)))
 (define a 2)
 (define b (cons 1 (cons 2 (cons 3 (cons 4 null)))))
+(define c (list (cons 1 2) (cons 2 3) (cons 4 5)))
+
 
 ;; put your code below
 
@@ -56,5 +58,17 @@
                                         [#t (foo v vec (+ n 1))]))])
     (foo v vec 0)))
 
+
 (define (cached-assoc xs n)
-  0)
+  (let* ([cache-table (make-vector n (cons #f #f))]
+        [cache-index 0]
+        [my-assoc (lambda (v)
+                    (let ([tmp-cache (vector-assoc v cache-table)])
+                          (if tmp-cache
+                              tmp-cache
+                              (let ([tmp-assoc (assoc v xs)])
+                                (if tmp-assoc
+                                (begin (vector-set! cache-table (remainder cache-index n) tmp-assoc) tmp-assoc)
+                                #f)))))])
+    my-assoc))
+
