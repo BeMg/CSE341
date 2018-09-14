@@ -22,15 +22,13 @@
 
 ;; Problem 1
 
-;; CHANGE (put your solutions here)
-
 (define (racketlist->mupllist rl)
   (cond [(null? rl) (aunit)]
         [#t (apair (car rl) (racketlist->mupllist (cdr rl)))]))
 
 (define (mupllist->racketlist ml)
-  (cond [(isaunit ml) null]
-        [#t (cons (fst ml) (mupllist->racketlist (snd ml)))]))
+  (cond [(aunit? ml) null]
+        [#t (cons (apair-e1 ml) (mupllist->racketlist (apair-e2 ml)))]))
 
 ;; Problem 2
 
@@ -56,7 +54,20 @@
                (int (+ (int-num v1) 
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
-        ;; CHANGE add more cases here
+        [(int? e) e]
+        [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
+                            (ifgreater-e3 e)
+                            (ifgreater-e4 e))]
+        [(fun? e) 0]
+        [(call? e) 0]
+        [(mlet? e) 0]
+        [(apair? e) e]
+        [(fst? e) (let ([v (eval-under-env (apair-e1 (fst-e e)) env)])
+                    v)]
+        [(snd? e) (let ([v (eval-under-env (apair-e2 (snd-e e)) env)])
+                    v)]
+        [(aunit? e) e]
+        [(isaunit? e) (aunit? e)]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
