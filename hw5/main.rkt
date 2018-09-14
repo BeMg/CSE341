@@ -55,19 +55,27 @@
                        (int-num v2)))
                (error "MUPL addition applied to non-number")))]
         [(int? e) e]
-        [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
-                            (ifgreater-e3 e)
-                            (ifgreater-e4 e))]
-        [(fun? e) 0]
-        [(call? e) 0]
-        [(mlet? e) 0]
+        [(ifgreater? e) (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
+                              [v2 (eval-under-env (ifgreater-e2 e) env)]
+                              [v3 (eval-under-env (ifgreater-e3 e) env)]
+                              [v4 (eval-under-env (ifgreater-e4 e) env)])
+                          (if (> (int-num v1) (int-num v2))
+                              v3
+                              v4))]
+        [(fun? e) (closure env e)]
+        [(call? e) (eval-under-env (fun-body (closure-fun (call-funexp e)))
+                                   (cons (cons (fun-formal (closure-fun (call-funexp e))) (call-actual e)) env)) ]
+        [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (mlet-e e)) env)])
+                     (eval-under-env (mlet-body e) env2))]
         [(apair? e) e]
         [(fst? e) (let ([v (eval-under-env (apair-e1 (fst-e e)) env)])
                     v)]
         [(snd? e) (let ([v (eval-under-env (apair-e2 (snd-e e)) env)])
                     v)]
         [(aunit? e) e]
-        [(isaunit? e) (aunit? e)]
+        [(isaunit? e) (if (aunit? (isaunit-e e))
+                          (int 1)
+                          (int 0))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
