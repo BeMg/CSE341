@@ -64,10 +64,16 @@
                               v4))]
         [(fun? e) (closure env e)]
         [(call? e) (eval-under-env (fun-body (closure-fun (call-funexp e)))
-                                   (cons (cons (fun-formal (closure-fun (call-funexp e))) (call-actual e)) env)) ]
-        [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (mlet-e e)) env)])
+                                   (cons
+                                    (cons
+                                     (fun-formal (closure-fun (call-funexp e)))
+                                     (eval-under-env (call-actual e) env))
+                                    env)) ]
+        [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                      (eval-under-env (mlet-body e) env2))]
-        [(apair? e) e]
+        [(apair? e) (let ([v1 (eval-under-env (apair-e1 e) env)]
+                          [v2 (eval-under-env (apair-e2 e) env)])
+                      (apair v1 v2))]
         [(fst? e) (let ([v (eval-under-env (apair-e1 (fst-e e)) env)])
                     v)]
         [(snd? e) (let ([v (eval-under-env (apair-e2 (snd-e e)) env)])
