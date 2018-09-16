@@ -25,7 +25,6 @@
 (define (racketlist->mupllist rl)
   (cond [(null? rl) (aunit)]
         [#t (apair (car rl) (racketlist->mupllist (cdr rl)))]))
-
 (define (mupllist->racketlist ml)
   (cond [(aunit? ml) null]
         [#t (cons (apair-e1 ml) (mupllist->racketlist (apair-e2 ml)))]))
@@ -63,16 +62,12 @@
                               v3
                               v4))]
         [(fun? e) (closure env e)]
-        [(call? e) (eval-under-env (fun-body (closure-fun (call-funexp e)))
-                                   (cons
-                                    (cons
-                                     (fun-formal (closure-fun (call-funexp e)))
-                                     (eval-under-env (call-actual e) env))
-                                    env)) ]
+        [(call? e) 0]
         [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                      (eval-under-env (mlet-body e) env2))]
         [(apair? e) (let ([v1 (eval-under-env (apair-e1 e) env)]
-                          [v2 (eval-under-env (apair-e2 e) env)])
+                          [v2 (eval-under-env (apair-e2 e) env)]
+                          [nouse (print env)])
                       (apair v1 v2))]
         [(fst? e) (let ([v (eval-under-env (apair-e1 (fst-e e)) env)])
                     v)]
@@ -90,16 +85,32 @@
         
 ;; Problem 3
 
-(define (ifaunit e1 e2 e3) "CHANGE")
+(define (ifaunit e1 e2 e3) (if (aunit? e1)
+                               e2
+                               e3))
 
-(define (mlet* lstlst e2) "CHANGE")
+(define (mlet* lstlst e2) (cond [(null? lstlst) e2]
+                                [#t (mlet (caar lstlst) (cdar lstlst) (mlet* (cdr lstlst) e2))]))
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4) (mlet* (list (cons "e1" e1) (cons "e2" e2))
+                                  (ifgreater (var "e1") (var "e2")
+                                             e4
+                                             (ifgreater (var "e1") (var "e2")
+                                                        e4
+                                                        e3))))
 
 ;; Problem 4
 
-(define mupl-map "CHANGE")
-
+(define mupl-map
+  (closure '()
+           (fun #f "a1"
+                (closure '()
+                         (fun "f1" "lst"
+                              (ifgreater (isaunit (var "lst")) (int 0)
+                                         (aunit)
+                                         (apair (call (var "a1") (fst (var "lst")))
+                                                (call (var  "f1") (snd (var "lst"))))))))))
+ 
 (define mupl-mapAddN 
   (mlet "map" mupl-map
         "CHANGE (notice map is now in MUPL scope)"))
