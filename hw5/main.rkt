@@ -62,14 +62,29 @@
                               v3
                               v4))]
         [(fun? e) (closure env e)]
-        [(call? e) 0]
+        [(call? e) (let* ([nouse (begin (println "In call") (println e) (println env))]
+                          [clo (cond [(closure? (call-funexp e)) (call-funexp e)]
+                                     [#t (eval-under-env (call-funexp e) env)])]
+                          [func (closure-fun clo)]
+                          [funcname (fun-nameopt func)]
+                          [funcarg (fun-formal func)]
+                          [funcbody (fun-body func)]
+                          [env2 (append (list (cons funcarg (eval-under-env (call-actual e) env))
+                                              (closure-env clo)
+                                              env))]
+                          [env3 (cond [funcname (append (list (cons funcname clo)) env2)]
+                                      [#t env2])]
+                          [nouse2 (begin (println "before eval") (println funcbody) (println env3))])
+                     (eval-under-env funcbody env3))]
+                                               
         [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                      (eval-under-env (mlet-body e) env2))]
-        [(apair? e) (let ([v1 (eval-under-env (apair-e1 e) env)]
-                          [v2 (eval-under-env (apair-e2 e) env)]
-                          [nouse (print env)])
+        [(apair? e) (let ([nouse (begin (println "In apair") (println e) (println env))]
+                          [v1 (eval-under-env (apair-e1 e) env)]
+                          [v2 (eval-under-env (apair-e2 e) env)])
                       (apair v1 v2))]
-        [(fst? e) (let ([v (eval-under-env (apair-e1 (fst-e e)) env)])
+        [(fst? e) (let ([nouse (begin (println "In fst") (println e))]
+                        [v (eval-under-env (apair-e1 (fst-e e)) env)])
                     v)]
         [(snd? e) (let ([v (eval-under-env (apair-e2 (snd-e e)) env)])
                     v)]
@@ -102,14 +117,12 @@
 ;; Problem 4
 
 (define mupl-map
-  (closure '()
-           (fun #f "a1"
-                (closure '()
-                         (fun "f1" "lst"
-                              (ifgreater (isaunit (var "lst")) (int 0)
-                                         (aunit)
-                                         (apair (call (var "a1") (fst (var "lst")))
-                                                (call (var  "f1") (snd (var "lst"))))))))))
+  (fun #f "a1"
+       (fun "f1" "lst"
+            (ifgreater (isaunit (var "lst")) (int 0)
+                       (aunit)
+                       (apair (call (var "a1") (fst (var "lst")))
+                              (call (var "f1") (snd (var "lst"))))))))
  
 (define mupl-mapAddN 
   (mlet "map" mupl-map
