@@ -74,7 +74,6 @@
                           [env3 (cond [funcname (append (list (cons funcname clo)) env2)]
                                       [#t env2])])
                      (eval-under-env funcbody env3))]
-        
         [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                      (eval-under-env (mlet-body e) env2))]
         ;[nouse (begin (println "In apair") (println e) (println env))]
@@ -91,6 +90,7 @@
         [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env))
                           (int 1)
                           (int 0))]
+        [(closure? e) e]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
@@ -109,7 +109,7 @@
 (define (ifeq e1 e2 e3 e4) (mlet* (list (cons "e1" e1) (cons "e2" e2))
                                   (ifgreater (var "e1") (var "e2")
                                              e4
-                                             (ifgreater (var "e1") (var "e2")
+                                             (ifgreater (var "e2") (var "e1")
                                                         e4
                                                         e3))))
 
@@ -125,7 +125,9 @@
  
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+        (fun #f "a1"
+             (call (var "map") (fun #f "x" (add (var "a1") (var "x"))))))) 
+  
 
 ;; Challenge Problem
 
