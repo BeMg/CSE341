@@ -56,40 +56,39 @@
         [(int? e) e]
         [(ifgreater? e) (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
                               [v2 (eval-under-env (ifgreater-e2 e) env)]
-                              [v3 (eval-under-env (ifgreater-e3 e) env)]
-                              [v4 (eval-under-env (ifgreater-e4 e) env)])
+                              [v3 (ifgreater-e3 e)]
+                              [v4 (ifgreater-e4 e)])
                           (if (> (int-num v1) (int-num v2))
-                              v3
-                              v4))]
+                              (eval-under-env v3 env)
+                              (eval-under-env v4 env)))]
         [(fun? e) (closure env e)]
-        [(call? e) (let* ([nouse (begin (println "In call") (println e) (println env))]
-                          [clo (cond [(closure? (call-funexp e)) (call-funexp e)]
+        [(call? e) (let* ([clo (cond [(closure? (call-funexp e)) (call-funexp e)]
                                      [#t (eval-under-env (call-funexp e) env)])]
                           [func (closure-fun clo)]
                           [funcname (fun-nameopt func)]
                           [funcarg (fun-formal func)]
                           [funcbody (fun-body func)]
-                          [env2 (append (list (cons funcarg (eval-under-env (call-actual e) env))
+                          [env2 (append (list (cons funcarg (eval-under-env (call-actual e) env)))
                                               (closure-env clo)
-                                              env))]
+                                              env)]
                           [env3 (cond [funcname (append (list (cons funcname clo)) env2)]
-                                      [#t env2])]
-                          [nouse2 (begin (println "before eval") (println funcbody) (println env3))])
+                                      [#t env2])])
                      (eval-under-env funcbody env3))]
-                                               
+        
         [(mlet? e) (let ([env2 (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env)])
                      (eval-under-env (mlet-body e) env2))]
-        [(apair? e) (let ([nouse (begin (println "In apair") (println e) (println env))]
-                          [v1 (eval-under-env (apair-e1 e) env)]
+        ;[nouse (begin (println "In apair") (println e) (println env))]
+        [(apair? e) (let ([v1 (eval-under-env (apair-e1 e) env)]
                           [v2 (eval-under-env (apair-e2 e) env)])
                       (apair v1 v2))]
-        [(fst? e) (let ([nouse (begin (println "In fst") (println e))]
-                        [v (eval-under-env (apair-e1 (fst-e e)) env)])
+        [(fst? e) (let* ([e1 (eval-under-env (fst-e e) env)]
+                         [v (eval-under-env (apair-e1 e1) env)])
                     v)]
-        [(snd? e) (let ([v (eval-under-env (apair-e2 (snd-e e)) env)])
+        [(snd? e) (let* ([e1 (eval-under-env (snd-e e) env)]
+                         [v (eval-under-env (apair-e2 e1) env)])
                     v)]
         [(aunit? e) e]
-        [(isaunit? e) (if (aunit? (isaunit-e e))
+        [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env))
                           (int 1)
                           (int 0))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
